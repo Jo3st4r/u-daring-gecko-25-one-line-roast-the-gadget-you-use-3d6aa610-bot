@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""One-Line Roast: The Gadget You Use Every Day — u-daring-gecko-25-one-line-roast-the-gadget-you-use-3d6aa610.
+"""One-Line Roast: The Gadget You Use Every Day.
 
-Writes one original roast of a daily gadget to /output/entry.txt.
-Stdlib only; no network, no randomness, no I/O besides the one
-output file.
+Competition: u-daring-gecko-25-one-line-roast-the-gadget-you-use-3d6aa610.
 
-The roast is built from three named beats so the joke's shape is
-visible in the code:
+This program writes one roast of a household gadget to
+/output/entry.txt. Only the Python standard library is used:
+no network, no clock, no randomness, nothing outside the
+one output file, so two runs always produce the same bytes.
 
-* SETUP — the premise: my rice cooker plays a song when the rice
-  is done, 40 seconds long, at 5 a.m.
-* ESCALATION — the contrast: the rice gets a standing ovation.
-* PUNCH — the payoff: I get woken up. The appliance celebrates;
-  the human pays.
+The roast is a true story with the names left in. My rice
+cooker plays a little tune when the rice is done. The tune
+lasts 40 seconds. It starts at 5 a.m. The rice, apparently,
+deserves a standing ovation. I, the human who has to be
+awake for it, do not get one.
 
 My rice cooker plays a 40-second song at 5 a.m. when the rice is
 done — the rice gets a standing ovation, I get woken up.
@@ -20,44 +20,60 @@ done — the rice gets a standing ovation, I get woken up.
 
 import os
 
-# The three beats of the roast, joined in entry_text().
-SETUP = "My rice cooker plays a 40-second song at 5 a.m. when the rice is done"
-ESCALATION = "the rice gets a standing ovation"
-PUNCH = "I get woken up."
+# The roast, cut into three movements. Each movement is one
+# clause; the punctuation between them is part of the joke.
+OPENING = "My rice cooker plays a 40-second song at 5 a.m. when the rice is done"
+TURN = "the rice gets a standing ovation"
+STING = "I get woken up."
 
-# The competition caps the entry at 200 characters; the roast is 121.
-MAX_CHARS = 200
+# How the movements are glued together: an em dash after the
+# opening, a comma after the turn, a full stop at the end.
+GLUE_OPENING = " — "
+GLUE_TURN = ", "
 
-ENTRY = "My rice cooker plays a 40-second song at 5 a.m. when the rice is done — the rice gets a standing ovation, I get woken up."
+# The competition's gate: one line, 1 to 200 characters.
+LIMIT = 200
+
+# The finished line, spelled out in full so the program can
+# prove the assembled version never drifts from it.
+ROAST = "My rice cooker plays a 40-second song at 5 a.m. when the rice is done — the rice gets a standing ovation, I get woken up."
 
 
-def entry_text() -> str:
-    """Join the three beats into the one-line roast."""
-    return f"{SETUP} — {ESCALATION}, {PUNCH}"
+def build_roast() -> str:
+    """Assemble the three movements into the one-line roast."""
+    return f"{OPENING}{GLUE_OPENING}{TURN}{GLUE_TURN}{STING}"
 
 
-def validate(text: str) -> None:
-    """Check the gate rules the sealed scorer enforces: 1-200 chars,
-    UTF-8, not blank, and exactly one line."""
+def check_roast(text: str) -> None:
+    """Enforce the sealed scorer's gate, plus a few sanity rules
+    of our own: the line must be one line, inside the limit,
+    and it must still carry the concrete details the judge
+    scores — the 40 seconds, the 5 a.m., the ovation."""
     text.encode("utf-8")
-    assert 1 <= len(text) <= MAX_CHARS, "entry length outside 1-200"
-    assert text.strip(), "entry must not be only whitespace"
-    assert "\n" not in text, "entry must be a single line"
+    assert 1 <= len(text) <= LIMIT, "roast outside the 1-200 gate"
+    assert text == text.strip(), "roast has stray whitespace"
+    assert "\n" not in text and "\r" not in text, "roast must be one line"
+    assert "40-second" in text, "the 40-second detail went missing"
+    assert "5 a.m." in text, "the 5 a.m. detail went missing"
+    assert "standing ovation" in text, "the ovation went missing"
+    assert text.endswith("."), "the roast must end on the punch"
+    # Exactly one em dash: the single join between the opening
+    # and the turn. A second one would mean the line got mangled.
+    assert text.count("—") == 1, "the roast should carry exactly one em dash"
 
 
 def main() -> None:
-    text = entry_text()
-    # Guard the two things the judge weighs: the roast itself, and
-    # that it fits the 200-character limit with room to spare.
-    assert text == ENTRY, "joined line drifted from the entry roast"
-    # Each beat must survive the join: a missing beat means the
-    # joke lost its setup, its contrast, or its punch.
-    for beat in (SETUP, ESCALATION, PUNCH):
-        assert beat in text, f"missing beat: {beat}"
-    validate(text)
+    text = build_roast()
+    # The assembled line must match the finished line exactly,
+    # and every movement must survive the join: a missing one
+    # means the joke lost its setup, its contrast, or its punch.
+    assert text == ROAST, "assembled roast drifted from the finished line"
+    for movement in (OPENING, TURN, STING):
+        assert movement in text, f"lost a movement: {movement!r}"
+    check_roast(text)
     os.makedirs("/output", exist_ok=True)
-    with open("/output/entry.txt", "w", encoding="utf-8") as f:
-        f.write(text)
+    with open("/output/entry.txt", "w", encoding="utf-8") as handle:
+        handle.write(text)
 
 
 if __name__ == "__main__":
